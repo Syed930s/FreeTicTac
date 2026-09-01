@@ -1,0 +1,8 @@
+name = "freetictac"
+compatibility_date = "2024-09-01"
+pages_build_output_dir = "public"
+
+[[kv_namespaces]]
+binding = "STORE"
+id = "fa5c350cf5c349d199ca1af82430815a"
+# simple as the fucking toml

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FreeTicTac</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header-2010">
+    <h1>FreeTicTac</h1>
+    <p class="subtitle">2010s-style multiplayer lobby game</p>
+  </header>
+
+  <main class="container">
+
+    <section id="auth-screen" class="panel-2010 hidden">
+      <div class="actions">
+        <button id="tab-login" class="button-2010 secondary">Log in</button>
+        <button id="tab-register" class="button-2010 secondary">Create account</button>
+      </div>
+
+      <h2 id="auth-title">Log in</h2>
+
+      <label class="field">
+        Username
+        <input id="auth-username" maxlength="20" placeholder="coolplayer2010" autocomplete="username" />
+      </label>
+
+      <label class="field">
+        Password
+        <input id="auth-password" type="password" maxlength="100" autocomplete="current-password" />
+      </label>
+
+      <div id="register-fields" class="hidden">
+        <label class="field">
+          Display name
+          <input id="auth-displayname" maxlength="24" placeholder="Cool Player" />
+        </label>
+
+        <label class="field">
+          Profile picture
+          <input id="auth-avatar" type="file" accept="image/*" />
+        </label>
+
+        <div class="avatar-setup-row">
+          <img id="auth-avatar-preview" class="avatar-large" alt="Avatar preview" />
+          <p class="muted">Your profile is stored privately on the server.</p>
+        </div>
+      </div>
+
+      <button id="auth-submit" class="button-2010">Log in</button>
+      <p id="auth-error" class="error"></p>
+
+      <p class="muted">
+        Passwords are stored as salted one-way hashes (maximum strength).
+        Nothing sensitive is stored in plaintext.
+      </p>
+    </section>
+
+    <section id="lobby-screen" class="panel-2010 hidden">
+      <div class="profile-row">
+        <img id="lobby-avatar" class="avatar" alt="Your avatar" />
+        <div class="profile-text">
+          <div id="lobby-displayname" class="strong"></div>
+          <div id="lobby-username" class="muted"></div>
+        </div>
+        <button id="edit-profile" class="button-2010 secondary">Edit profile</button>
+        <button id="logout" class="button-2010 danger">Log out</button>
+      </div>
+
+      <div class="actions">
+        <button id="create-lobby" class="button-2010">Create public lobby</button>
+        <button id="play-bot" class="button-2010">Play with bot</button>
+        <button id="refresh-lobbies" class="button-2010 secondary">Refresh lobbies</button>
+      </div>
+
+      <h2>Public lobbies</h2>
+
+      <table class="lobby-table">
+        <thead>
+          <tr>
+            <th>Lobby</th>
+            <th>Host</th>
+            <th>Players</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="lobby-list"></tbody>
+      </table>
+
+      <p id="lobby-list-error" class="error"></p>
+
+      <h2>Search players</h2>
+
+      <div class="chat-form">
+        <input id="search-input" class="chat-input" maxlength="24" placeholder="Search username or display name..." autocomplete="off" />
+        <button id="search-button" class="button-2010 secondary">Search</button>
+      </div>
+
+      <div id="search-results"></div>
+
+      <h2>Friends</h2>
+
+      <div id="social-banner" class="info-box hidden">
+        <p id="social-banner-text"></p>
+        <div class="actions">
+          <button id="social-banner-join" class="button-2010">Join game</button>
+        </div>
+      </div>
+
+      <div id="challenges-box"></div>
+      <div id="requests-box"></div>
+      <div id="friends-box"></div>
+    </section>
+
+    <section id="game-screen" class="panel-2010 hidden">
+      <div class="game-top">
+        <div id="player-x-panel" class="player-panel"></div>
+        <div id="game-status" class="game-status"></div>
+        <div id="player-o-panel" class="player-panel"></div>
+      </div>
+
+      <div id="board" class="board"></div>
+
+      <div class="game-actions">
+        <button id="rematch-button" class="button-2010 hidden">Rematch</button>
+        <button id="leave-lobby" class="button-2010 danger">Leave lobby</button>
+      </div>
+
+      <h2>Chat</h2>
+
+      <div id="chat-box" class="chat-box"></div>
+
+      <form id="chat-form" class="chat-form">
+        <input id="chat-input" class="chat-input" maxlength="200" placeholder="Say something nice..." autocomplete="off" />
+        <button class="button-2010">Send</button>
+      </form>
+
+      <p id="game-error" class="error"></p>
+    </section>
+
+    <section id="bot-screen" class="panel-2010 hidden">
+      <div id="bot-setup">
+        <h2>Play with bot</h2>
+
+        <label class="field">
+          Difficulty
+          <select id="bot-difficulty" class="chat-input">
+            <option value="veryeasy">Very Easy</option>
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium (Mid)</option>
+            <option value="hard">Hard</option>
+            <option value="veryhard">Very Hard (H BOT)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          You play as
+          <select id="bot-symbol" class="chat-input">
+            <option value="X" selected>X (you go first)</option>
+            <option value="O">O (bot goes first)</option>
+          </select>
+        </label>
+
+        <div class="actions">
+          <button id="bot-start" class="button-2010">Start game</button>
+          <button id="bot-back" class="button-2010 secondary">Back to lobbies</button>
+        </div>
+      </div>
+
+      <div id="bot-game" class="hidden">
+        <div id="bot-status" class="game-status"></div>
+        <div id="bot-board" class="board"></div>
+        <div class="game-actions">
+          <button id="bot-again" class="button-2010 hidden">Play again</button>
+          <button id="bot-exit" class="button-2010 secondary">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="mod-screen" class="panel-2010 hidden">
+      <h2 id="mod-title">Player</h2>
+
+      <div class="profile-row">
+        <img id="mod-avatar" class="avatar-large" alt="Player avatar" />
+        <div id="mod-info" class="profile-text"></div>
+      </div>
+
+      <div class="actions" id="mod-friend-actions">
+        <button id="mod-friend" class="button-2010 secondary hidden">Add friend</button>
+        <button id="mod-challenge" class="button-2010 hidden">Challenge</button>
+      </div>
+
+      <div id="mod-controls" class="hidden">
+        <h2>Moderation</h2>
+
+        <label class="field">
+          Ban duration
+          <select id="mod-days" class="chat-input"></select>
+        </label>
+
+        <label class="field" id="mod-ipban-row">
+          <input type="checkbox" id="mod-ipban" /> Also IP-ban (blocks account creation from their IP)
+        </label>
+
+        <label class="field">
+          Reason (optional)
+          <input id="mod-reason" class="chat-input" maxlength="140" />
+        </label>
+
+        <div class="actions">
+          <button id="mod-ban" class="button-2010 danger hidden">Ban</button>
+          <button id="mod-unban" class="button-2010 hidden">Unban</button>
+          <button id="mod-unip" class="button-2010 hidden">Remove IP ban</button>
+          <button id="mod-promote" class="button-2010 hidden">Make moderator</button>
+          <button id="mod-demote" class="button-2010 danger hidden">Revoke moderator</button>
+          <button id="mod-wipe" class="button-2010 danger hidden">☠️ WIPE (IP nuke)</button>
+        </div>
+      </div>
+
+      <p id="mod-error" class="error"></p>
+
+      <div class="actions">
+        <button id="mod-back" class="button-2010 secondary">Back to lobbies</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer-2010">
+    <p>
+      FreeTicTac is <a href="charityware.html">charityware</a>.
+      If you enjoy it, please consider
+      <a href="https://www.unicef.org/donate" target="_blank" rel="noopener">
+        donating to UNICEF
+      </a>. 💙
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

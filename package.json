@@ -1,0 +1,17 @@
+{
+  "name": "freetictac",
+  "version": "1.0.0",
+  "description": "FreeTicTac - Multiplayer Tic-Tac-Toe on Cloudflare",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx wrangler pages dev public",
+    "deploy": "npx wrangler pages deploy public --project-name freetictac",
+    "deploy:prod": "npx wrangler pages deploy public --project-name freetictac --branch main"
+  },
+  "keywords": ["tictactoe", "multiplayer", "cloudflare"],
+  "author": "Syed Shah",
+  "license": "ISC",
+  "devDependencies": {
+    "wrangler": "^4.127.1"
+  }
+}
