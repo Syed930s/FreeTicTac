@@ -4,5 +4,5 @@ pages_build_output_dir = "public"
 
 [[kv_namespaces]]
 binding = "STORE"
-id = "fa5c350cf5c349d199ca1af82430815a"
+id = "38d954153fcb4563ab3cbe76a011cb5b"
 # simple as the fucking toml

@@ -52,6 +52,8 @@ export async function onRequest({ request, env }) {
             if (action === "moderateRemoveIpBan") return await moderateRemoveIpBan(kv, body);
             if (action === "moderateSetRole") return await moderateSetRole(kv, body);
             if (action === "moderateWipe") return await moderateWipe(kv, body);
+            if (action === "moderateTerminate") return await moderateTerminate(kv, body);
+            if (action === "moderateResetPassword") return await moderateResetPassword(kv, body);
             if (action === "getSocial") return await getSocial(kv, body);
             if (action === "sendFriendRequest") return await sendFriendRequest(kv, body);
             if (action === "respondFriendRequest") return await respondFriendRequest(kv, body);
@@ -394,13 +396,15 @@ async function searchUsers(kv, body) {
 }
 
 function moderationPermissions(actor, target) {
-    const perms = { canBan: false, canUnban: false, canSetRole: false, canWipe: false, days: [] };
+    const perms = { canBan: false, canUnban: false, canSetRole: false, canWipe: false, canTerminate: false, canResetPassword: false, days: [] };
     if (!actor || !target || actor.username === target.username) return perms;
 
     if (actor.role === "owner") {
         perms.canBan = true; perms.canUnban = true;
         perms.canSetRole = target.role !== "owner";
         perms.canWipe = target.role !== "owner";
+        perms.canTerminate = target.role !== "owner";
+        perms.canResetPassword = target.role !== "owner";
         perms.days = [...MOD_DAYS, null];
     } else if (actor.role === "moderator" && target.role === "user") {
         perms.canBan = true; perms.days = [...MOD_DAYS];
@@ -536,6 +540,74 @@ async function moderateWipe(kv, body) {
     await writeRecord(kv, IPBAN_PREFIX + record.ipHash, { until: null, by: actor.username, at: Date.now() });
 
     return json(200, { wiped: wipedUsernames });
+}
+
+async function moderateTerminate(kv, body) {
+    const actor = await loadAuthenticatedPlayer(kv, body);
+    if (actor.role !== "owner") throw httpError(403, "Only the owner can terminate accounts.");
+
+    const targetUsername = normalizeUsername(body?.targetUsername);
+    const record = await readUserRecord(kv, targetUsername);
+    if (!record) throw httpError(404, "Player not found.");
+    if (record.username === OWNER_USERNAME) throw httpError(403, "Cannot terminate the owner.");
+
+    await removeFromUserIndex(kv, [targetUsername]);
+
+    const userIndex = await readUserIndex(kv);
+    for (const entry of userIndex) {
+        const rec = await readUserRecord(kv, entry.u);
+        if (!rec) continue;
+        let changed = false;
+        if (rec.friends.includes(targetUsername)) { rec.friends = rec.friends.filter(u => u !== targetUsername); changed = true; }
+        if (rec.reqIn.some(r => (typeof r === "string" ? r : r.from) === targetUsername)) { rec.reqIn = rec.reqIn.filter(r => (typeof r === "string" ? r : r.from) !== targetUsername); changed = true; }
+        if (rec.reqOut.includes(targetUsername)) { rec.reqOut = rec.reqOut.filter(u => u !== targetUsername); changed = true; }
+        if (rec.chIn.some(c => (typeof c === "string" ? c : c.from) === targetUsername)) { rec.chIn = rec.chIn.filter(c => (typeof c === "string" ? c : c.from) !== targetUsername); changed = true; }
+        if (rec.chOut.includes(targetUsername)) { rec.chOut = rec.chOut.filter(u => u !== targetUsername); changed = true; }
+        if (changed) await saveUserRecord(kv, rec);
+    }
+
+    const lobbyIndex = await readLobbyIndex(kv);
+    for (const entry of lobbyIndex) {
+        const lobby = await readLobby(kv, entry.id);
+        if (!lobby) continue;
+        const playerIndex = lobby.players.findIndex(p => p.playerId === targetUsername);
+        if (playerIndex !== -1) {
+            lobby.players.splice(playerIndex, 1);
+            if (lobby.players.length === 0) {
+                await deleteLobby(kv, lobby.id);
+            } else {
+                await writeLobby(kv, lobby);
+            }
+        }
+    }
+
+    await deleteKey(kv, USER_PREFIX + targetUsername);
+
+    return json(200, { ok: true, terminated: targetUsername });
+}
+
+async function moderateResetPassword(kv, body) {
+    const actor = await loadAuthenticatedPlayer(kv, body);
+    if (actor.role !== "owner") throw httpError(403, "Only the owner can reset passwords.");
+
+    const targetUsername = normalizeUsername(body?.targetUsername);
+    const newPassword = String(body?.newPassword || "");
+
+    if (newPassword.length < 6) throw httpError(400, "New password must be at least 6 characters.");
+
+    const record = await readUserRecord(kv, targetUsername);
+    if (!record) throw httpError(404, "Player not found.");
+
+    const newSalt = randomHex(32);
+    const newHash = await hashPassword(newPassword, newSalt);
+
+    record.salt = newSalt;
+    record.hash = newHash;
+    record.token = null;
+
+    await saveUserRecord(kv, record);
+
+    return json(200, { ok: true, message: `Password reset for ${targetUsername}` });
 }
 
 /* ---------- friends + challenges ---------- */

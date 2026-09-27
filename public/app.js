@@ -418,6 +418,8 @@ encodeURIComponent(
         $("mod-promote").addEventListener("click", () => setRole("moderator"));
         $("mod-demote").addEventListener("click", () => setRole("user"));
         $("mod-wipe").addEventListener("click", doWipe);
+        $("mod-terminate").addEventListener("click", doTerminate);
+        $("mod-reset-password").addEventListener("click", doResetPassword);
         $("mod-friend").addEventListener("click", modFriendAction);
         $("mod-challenge").addEventListener("click", () => { if (currentModTarget) challengeFriend(currentModTarget.username); });
     }
@@ -480,7 +482,7 @@ encodeURIComponent(
             else { friendButton.textContent = "Add friend"; friendButton.classList.remove("hidden"); }
         }
 
-        const anyPerm = perms.canBan || perms.canUnban || perms.canSetRole || perms.canWipe;
+        const anyPerm = perms.canBan || perms.canUnban || perms.canSetRole || perms.canWipe || perms.canTerminate || perms.canResetPassword;
         $("mod-controls").classList.toggle("hidden", !anyPerm); $("mod-error").textContent = "";
         const daysSelect = $("mod-days"); daysSelect.innerHTML = "";
         if (perms.canBan) {
@@ -498,6 +500,8 @@ encodeURIComponent(
         $("mod-promote").classList.toggle("hidden", !(perms.canSetRole && user.role === "user"));
         $("mod-demote").classList.toggle("hidden", !(perms.canSetRole && user.role === "moderator"));
         $("mod-wipe").classList.toggle("hidden", !perms.canWipe);
+        $("mod-terminate").classList.toggle("hidden", !perms.canTerminate);
+        $("mod-reset-password").classList.toggle("hidden", !perms.canResetPassword);
     }
 
     async function modFriendAction() {
@@ -534,6 +538,35 @@ encodeURIComponent(
             showLobbyScreen();
             $("lobby-list-error").textContent = `WIPE complete. Deleted account(s): ${(data.wiped || []).join(", ") || target}. Their IP is permanently 403'd.`;
         } catch (error) { $("mod-error").textContent = error.message; }
+    }
+
+    async function doTerminate() {
+        const target = currentModTarget.username;
+        if (!confirm(`TERMINATE ${target}? This permanently deletes their account from the database (no IP ban).`)) return;
+        if (!confirm("Are you 100% sure? They will need to create a brand new account to play again.")) return;
+
+        try {
+            $("mod-error").textContent = "";
+            await api("moderateTerminate", { method: "POST", body: authBody({ targetUsername: target }) });
+            showLobbyScreen();
+            $("lobby-list-error").textContent = `Account ${target} has been permanently terminated.`;
+        } catch (error) {
+            $("mod-error").textContent = error.message;
+        }
+    }
+
+    async function doResetPassword() {
+        const target = currentModTarget.username;
+        const newPassword = prompt(`Enter new password for ${target} (minimum 6 characters):`);
+        if (!newPassword) return;
+
+        try {
+            $("mod-error").textContent = "";
+            await api("moderateResetPassword", { method: "POST", body: authBody({ targetUsername: target, newPassword }) });
+            $("mod-error").textContent = `Password reset successfully for ${target}. They can now log in with the new password.`;
+        } catch (error) {
+            $("mod-error").textContent = error.message;
+        }
     }
 
     async function setRole(role) {
