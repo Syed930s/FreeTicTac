@@ -67,7 +67,7 @@ Issues and PRs are welcome.
 
 ## License
 
-ISC. See `package.json`.
+BSD 3 "new" or "revised".
 
 ## Author
 
