@@ -10,7 +10,7 @@
   },
   "keywords": ["tictactoe", "multiplayer", "cloudflare"],
   "author": "Syed Shah",
-  "license": "ISC",
+  "license": "BSD-3-Clause",
   "devDependencies": {
     "wrangler": "^4.127.1"
   }
